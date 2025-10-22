@@ -1,0 +1,14 @@
+{
+  "name": "parksense",
+  "version": "1.0.0",
+  "description": "Full-stack ParkSense application root.",
+  "main": "index.js",
+  "scripts": {
+    "start": "npm run install-client && npm run start-client",
+    "install-client": "cd client && npm install",
+    "start-client": "cd client && npm run dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
