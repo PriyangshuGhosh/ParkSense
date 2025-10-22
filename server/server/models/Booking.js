@@ -1,12 +1,68 @@
-// server/routes/booking.js
-const express = require('express');
-const router = express.Router();
-const auth = require('../middleware/auth');
-const Booking = require('../models/Booking');
-const ParkingSpot = require('../models/ParkingSpot');
-const ParkingLot = require('../models/ParkingLot');
+// server/models/Booking.js
+import { db } from '../../firebase/firebase.js';
+import { collection, doc, getDoc, setDoc, updateDoc, deleteDoc, query, where, getDocs } from 'firebase/firestore';
 
-// @route POST /api/booking/confirm
+const COLLECTION_NAME = 'bookings';
+
+class Booking {
+    static async create(bookingData) {
+        const bookingRef = doc(db, COLLECTION_NAME);
+        const data = {
+            ...bookingData,
+            createdAt: new Date(),
+            status: bookingData.status || 'active'
+        };
+        await setDoc(bookingRef, data);
+        return { id: bookingRef.id, ...data };
+    }
+
+    static async getById(bookingId) {
+        const bookingRef = doc(db, COLLECTION_NAME, bookingId);
+        const bookingDoc = await getDoc(bookingRef);
+        if (!bookingDoc.exists()) return null;
+        return { id: bookingDoc.id, ...bookingDoc.data() };
+    }
+
+    static async getByUser(userId) {
+        const q = query(collection(db, COLLECTION_NAME), where("user", "==", userId));
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    }
+
+    static async getActiveBookings() {
+        const q = query(collection(db, COLLECTION_NAME), where("status", "==", "active"));
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    }
+
+    static async update(bookingId, updateData) {
+        const bookingRef = doc(db, COLLECTION_NAME, bookingId);
+        await updateDoc(bookingRef, updateData);
+        return { id: bookingId, ...updateData };
+    }
+
+    static async updateStatus(bookingId, status) {
+        return this.update(bookingId, { status });
+    }
+
+    static async delete(bookingId) {
+        const bookingRef = doc(db, COLLECTION_NAME, bookingId);
+        await deleteDoc(bookingRef);
+        return true;
+    }
+
+    static async extendBooking(bookingId, additionalHours) {
+        const booking = await this.getById(bookingId);
+        if (!booking) throw new Error('Booking not found');
+
+        const currentExpiry = booking.expiryTime.toDate();
+        const newExpiryTime = new Date(currentExpiry.getTime() + additionalHours * 60 * 60 * 1000);
+        
+        return this.update(bookingId, { expiryTime: newExpiryTime });
+    }
+}
+
+export default Booking;
 // @desc Finalize the spot booking (DSA: Atomic Transaction)
 router.post('/confirm', auth, async (req, res) => {
     const { spotId, lotId, name, email, vehicle, paymentMethod } = req.body;

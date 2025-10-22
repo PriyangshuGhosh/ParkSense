@@ -1,19 +1,26 @@
 // server/middleware/auth.js
-const jwt = require('jsonwebtoken');
+import { getAuth } from 'firebase/auth';
+import { auth } from '../../firebase/firebase.js';
 
-module.exports = function (req, res, next) {
-    // Get token from header (usually 'x-auth-token')
-    const token = req.header('x-auth-token');
+export default async function(req, res, next) {
+    // Get token from header
+    const token = req.header('Authorization')?.replace('Bearer ', '');
 
     if (!token) {
         return res.status(401).json({ message: 'No token, authorization denied' });
     }
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded.user; // { id: userId, role: userRole }
+        // Verify token with Firebase Auth
+        const decodedToken = await auth.verifyIdToken(token);
+        req.user = {
+            uid: decodedToken.uid,
+            email: decodedToken.email,
+            role: decodedToken.role || 'student'
+        };
         next();
     } catch (err) {
-        res.status(401).json({ message: 'Token is not valid' });
+        console.error('Auth error:', err);
+        res.status(401).json({ message: 'Invalid token' });
     }
 };
