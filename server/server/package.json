@@ -6,7 +6,8 @@
   "private": true,
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "lint": "echo \"No linter configured. Add ESLint to enable linting.\""
   },
   "dependencies": {
     "cors": "^2.8.5",
