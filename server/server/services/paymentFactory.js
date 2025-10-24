@@ -1,25 +1,16 @@
-import mockPayment from './mockPayment.js';
-import Stripe from 'stripe';
+const MockPayment = require('./mockPayment');
 
-const useMock = (process.env.USE_MOCK_PAYMENT || 'true') === 'true';
+let PaymentService;
 
-let stripeClient = null;
-if (!useMock && process.env.STRIPE_SECRET_KEY) {
-  stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY);
+if (process.env.USE_MOCK_PAYMENT === 'false' || process.env.USE_MOCK_PAYMENT === '0') {
+  try {
+    PaymentService = require('./payment');
+  } catch (err) {
+    console.warn('Real payment service not available; falling back to mock.', err.message || err);
+    PaymentService = MockPayment;
+  }
+} else {
+  PaymentService = MockPayment;
 }
 
-const payment = useMock ? mockPayment : {
-  async createPaymentIntent(amount) {
-    return stripeClient.paymentIntents.create({ amount: Math.round(amount * 100), currency: 'inr' });
-  },
-  async verifyPayment(id) {
-    const pi = await stripeClient.paymentIntents.retrieve(id);
-    return pi && pi.status === 'succeeded';
-  },
-  calculateParkingFee(durationHours, spotType = 'standard') {
-    const baseRate = spotType === 'premium' ? 50 : 30;
-    return baseRate * durationHours;
-  }
-};
-
-export default payment;
+module.exports = PaymentService;

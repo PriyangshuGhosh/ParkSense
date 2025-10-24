@@ -1,6 +1,7 @@
 // server/middleware/auth.js
 import { getAuth } from 'firebase/auth';
 import { auth } from '../../firebase/firebase.js';
+const { admin } = require('../../firebase/admin');
 
 export default async function(req, res, next) {
     // Get token from header
@@ -23,4 +24,23 @@ export default async function(req, res, next) {
         console.error('Auth error:', err);
         res.status(401).json({ message: 'Invalid token' });
     }
-};
+}
+
+async function authenticate(req, res, next) {
+    try {
+        const header = req.headers.authorization || req.headers.Authorization;
+        if (!header || !header.startsWith('Bearer ')) {
+            return res.status(401).json({ message: 'Missing or invalid Authorization header' });
+        }
+        const idToken = header.split(' ')[1];
+
+        const decoded = await admin.auth().verifyIdToken(idToken);
+        req.user = decoded; // decoded.uid contains the user id
+        return next();
+    } catch (err) {
+        console.error('Auth verification failed:', err && err.message ? err.message : err);
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+}
+
+module.exports = { authenticate };

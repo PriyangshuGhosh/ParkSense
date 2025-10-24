@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 export default function Index() {
   const navigate = useNavigate();
@@ -77,6 +78,13 @@ export default function Index() {
           </div>
         </form>
       </div>
+      <nav>
+        <ul>
+          <li><Link to="/about">About</Link></li>
+          <li><Link to="/dashboard">Dashboard</Link></li>
+          <li><Link to="/parking-grid">View Parking</Link></li>
+        </ul>
+      </nav>
     </div>
   );
 }
