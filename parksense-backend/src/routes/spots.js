@@ -6,8 +6,7 @@ const router = express.Router();
 // Global variables provided by the environment
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-// NOTE: db is NOT initialized here to prevent the "no-app" error. 
-// It will be initialized inside the route handler, ensuring initFirebaseAdmin() has run.
+// NOTE: db is NOT initialized here to prevent the "no-app" error during server startup.
 let db = null; 
 
 /**
@@ -17,15 +16,15 @@ let db = null;
  */
 router.get('/', async (req, res) => {
     try {
-        // --- LAZY INITIALIZATION FIX ---
-        // Ensure db is initialized now that the Firebase app is guaranteed to exist.
+        // --- CRITICAL FIX: Explicit Firestore Client Initialization ---
+        // We ensure 'db' is derived from the primary, initialized Firebase app instance,
+        // which guarantees it uses the credentials loaded in src/firebaseAdmin.js (with the Editor role).
         if (!db) {
-            db = admin.firestore();
+            db = admin.app().firestore(); 
         }
-        // -------------------------------
+        // -------------------------------------------------------------
 
         // --- MANDATORY FIRESTORE PATH CONSTRUCTION ---
-        // For public/shared data, the path is: /artifacts/{appId}/public/data/{collectionName}
         const collectionName = 'parking_spots'; 
         const spotsCollectionPath = `artifacts/${appId}/public/data/${collectionName}`;
         
@@ -47,13 +46,15 @@ router.get('/', async (req, res) => {
             }
         });
 
-        console.log(`[Firestore] Found ${spots.length} spots.`);
+        console.log(`[Firestore] Found ${spots.length} spots. Connection successful.`);
 
         // Respond with the array of spots
         res.status(200).json({ data: spots });
 
     } catch (error) {
         console.error('Error fetching parking spots:', error.message);
+        // Log the error detail for debugging
+        console.error('Full Firestore Error:', error); 
         // Respond with a 500 error, but send an empty array to prevent client-side crash
         res.status(500).json({ error: 'Failed to fetch spots from database.', data: [] });
     }

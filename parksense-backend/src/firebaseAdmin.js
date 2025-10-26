@@ -1,60 +1,67 @@
 import admin from 'firebase-admin';
+import path from 'path';
 import fs from 'fs';
 
-/**
- * Initializes the Firebase Admin SDK, checking for existing app instances
- * and attempting to load credentials from:
- * 1. FIREBASE_CREDENTIALS_JSON environment variable (Recommended for deployment).
- * 2. Service account JSON file path (Legacy/Local method).
- * 3. Default Application Credentials (ADC).
- * @returns {object} The initialized Firebase Admin instance.
- */
-export default function initFirebaseAdmin(){
-    // Check if the app is already initialized
-    if (admin.apps && admin.apps.length) return admin;
+// Helper function to resolve the current directory
+const __dirname = path.resolve();
 
-    let credentialsLoaded = false;
-    
-    // 1. Try to load from FIREBASE_CREDENTIALS_JSON environment variable
-    const credentialsJsonString = process.env.FIREBASE_CREDENTIALS_JSON;
+let db; // Hold the initialized Firestore instance
 
-    if (credentialsJsonString) {
-        try {
-            const serviceAccount = JSON.parse(credentialsJsonString);
-            admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
-            console.log('SUCCESS: Initialized Firebase Admin from FIREBASE_CREDENTIALS_JSON.');
-            credentialsLoaded = true;
-        } catch (e) {
-            console.error('ERROR: Failed to parse FIREBASE_CREDENTIALS_JSON:', e.message);
-        }
+export function getFirestoreInstance() {
+    if (!db) {
+        throw new Error("Firestore has not been initialized. Call initFirebaseAdmin first.");
     }
+    return db;
+}
 
-    // 2. Fallback to Service Account File Path (Only if not already loaded)
-    if (!credentialsLoaded) {
-        const keyPath = process.env.FIREBASE_SERVICE_ACCOUNT || './serviceAccountKey.json';
-        
-        if (fs.existsSync(keyPath)) {
-            try {
-                const serviceAccount = JSON.parse(fs.readFileSync(keyPath, 'utf8'));
-                admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
-                console.log('SUCCESS: Initialized Firebase Admin with service account file.');
-                credentialsLoaded = true;
-            } catch (e) {
-                console.error('ERROR: Failed to parse or load service account key file:', e.message);
+export default function initFirebaseAdmin() {
+    try {
+        if (admin.apps.length === 0) {
+            
+            let serviceAccount;
+            let source = '';
+            
+            // Define the expected path relative to the project root where the key *should* be
+            // The path reported in the error was: C:\Users\hsgpi\OneDrive\Desktop\ParkSense\parksense-backend\serviceAccountKey.json
+            // We adjust this path to be robust. 
+            // We assume __dirname is the project root (ParkSense), so we look inside the parksense-backend folder.
+            const expectedBackendPath = path.join(__dirname, 'parksense-backend');
+            const serviceAccountPath = path.join(expectedBackendPath, 'serviceAccountKey.json');
+
+
+            // 1. Check for the Environment Variable (PREFERRED METHOD for production)
+            const envJson = process.env.FIREBASE_CREDENTIALS_JSON;
+            if (envJson) {
+                // Parse the JSON content from the environment variable
+                serviceAccount = JSON.parse(envJson);
+                source = 'from environment variable';
+            } 
+            
+            // 2. Fallback to Disk File (ONLY for local development)
+            else {
+                // Use the corrected path: C:\...\ParkSense\parksense-backend\serviceAccountKey.json
+                if (!fs.existsSync(serviceAccountPath)) {
+                    throw new Error(`Service Account file not found at: ${serviceAccountPath} and FIREBASE_CREDENTIALS_JSON is not set.`);
+                }
+                const serviceAccountContent = fs.readFileSync(serviceAccountPath, 'utf8');
+                serviceAccount = JSON.parse(serviceAccountContent);
+                source = 'from disk';
             }
+
+            const projectId = serviceAccount.project_id;
+
+            admin.initializeApp({
+                credential: admin.credential.cert(serviceAccount),
+                projectId: projectId 
+            });
+
+            db = admin.app().firestore();
+
+            console.log(`SUCCESS: Initialized Firebase Admin with explicit project ID ${source}.`);
         }
+    } catch (error) {
+        console.error('ERROR: Failed to initialize Firebase Admin SDK.');
+        console.error('Ensure the credential source is correct.');
+        console.error(error.message);
     }
-    
-    // 3. Fallback to Default Credentials (If all others failed)
-    if (!credentialsLoaded) {
-        console.warn('WARNING: No explicit Firebase credentials found. Initializing admin with default credentials (may fail for Firestore).');
-        try { 
-            admin.initializeApp(); 
-            credentialsLoaded = true;
-        } catch(e){ 
-            console.warn('Firebase admin default init failed:', e.message); 
-        }
-    }
-    
-    return admin;
 }
