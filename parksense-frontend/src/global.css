@@ -1,0 +1,161 @@
+/** @import must precede all other statements */
+@import url("https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&family=Inter:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fustat:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Karma:wght@400;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /**
+   * Tailwind CSS theme
+   * tailwind.config.ts expects the following color variables to be expressed as HSL values.
+   * A different format will require also updating the theme in tailwind.config.ts.
+   */
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%; /* Dark foreground color */
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* ParkSense Login Colors */
+    --parksense-border: 144 98% 25%;
+    --parksense-title: 110 93% 22%;
+    --parksense-gray: 0 2% 30%;
+    --parksense-button: 144 91% 32%;
+
+    /* GITAM Dashboard Colors */
+    --gitam-green: 144 98% 25%;
+    --gitam-gray: 0 0% 89%;
+    --dashboard-gray: 0 0% 89%;
+    --profile-gray: 0 0% 85%;
+    
+    /* Parking Spot Colors - Dashboard */
+    --spot-red: 0 66% 50%;
+    --spot-blue: 214 80% 52%;
+    --spot-gold: 44 59% 40%;
+    --spot-purple: 265 59% 40%;
+    --spot-teal: 165 71% 57%;
+    --spot-green: 120 77% 28%;
+    --spot-placeholder: 0 4% 74%;
+    
+    /* Parking Spot Colors - Booking Page */
+    --spot-ict: 0 66% 50%;
+    --spot-krc: 214 80% 52%;
+    --spot-gimsr: 44 59% 40%;
+    --spot-cb: 265 59% 40%;
+    --spot-vb: 165 71% 57%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    /* REMOVED: @apply border; */ 
+  }
+
+  /* Universal element styling to ensure visibility */
+  input, textarea {
+    /* Ensures dark text is used explicitly, overriding any global light defaults */
+    @apply text-foreground; 
+    /* Ensures a border is visible to separate the input from a white background */
+    border-color: hsl(var(--border));
+    border-width: 1px;
+    background-color: transparent;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  :where(p, span, li, h1, h2, h3, h4, h5, h6, a, button, label, td, th) {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  pre,
+  code {
+    overflow-x: auto;
+    white-space: pre;
+  }
+}
+
+/* Custom text shadow for dashboard */
+@layer utilities {
+  .text-shadow {
+    text-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+  }
+}
